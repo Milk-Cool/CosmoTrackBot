@@ -1,2 +1,2 @@
 # CosmoTrackBot
-A telegram bot for CosmoTrack
+Set `TOKEN` and `PASSWORD` environment variables to make it work!

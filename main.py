@@ -29,6 +29,7 @@ def commit_names():
 	f.close();
 
 bot = telebot.TeleBot(os.environ["TOKEN"]);
+no_markup = telebot.types.ReplyKeyboardRemove(selective=False);
 
 def server():
 	class WebRequestHandler(BaseHTTPRequestHandler):
@@ -51,7 +52,7 @@ def server():
 				try:
 					users = topics[data["topic"][0]];
 					for i in users:
-						bot.send_message(i, "Привет!\nМы выложили новый пост по теме \"" + names[data["topic"][0]] + "\", обязательно посмотри!\n\n" + data["url"][0]);
+						bot.send_message(i, "Привет!\nМы выложили новый пост по теме \"" + names[data["topic"][0]] + "\", обязательно посмотри!\n\n" + data["url"][0], reply_markup=no_markup);
 					self.send_response(200);
 					self.send_header("Content-Type", "text/plain");
 					self.end_headers();
@@ -79,9 +80,26 @@ threading.Thread(target=server).start();
 def send_welcome(message):
 	try:
 		topic = message.text.split(" ")[1];
-		topics[topic] += [message.from_user.id];
+		if(message.from_user.id not in topics[topic]): topics[topic] += [message.from_user.id];
 		commit_topics();
-		bot.reply_to(message, "Успешно подписал тебя на тему " + unescape(names[topic]) + "!");
+		bot.reply_to(message, "Успешно подписал тебя на тему " + unescape(names[topic]) + "!", reply_markup=markup);
 	except IndexError:
-		bot.reply_to(message, "Привет! 👋\nЭтот бот поможет тебе следить за новостями по космосу. Просто нажми на кнопку \"Следить\" под постом на сайте и бот будет присылать тебе новости про определённую миссию, компанию, страну и т. д.");
+		bot.reply_to(message, "Привет! 👋\nЭтот бот поможет тебе следить за новостями по космосу. Просто нажми на кнопку \"Следить\" под постом на сайте и бот будет присылать тебе новости про определённую миссию, компанию, страну и т. д.\n\nДля того, чтобы вручную подписаться на какую-то тему, пришли мне имя темы, и я тебе покажу то, на что ты хочешь подписаться.", reply_markup=no_markup);
+
+@bot.message_handler(func=lambda m: True)
+def search_topics(message):
+	markup = telebot.types.InlineKeyboardMarkup();
+	for i, j in names.items():
+		if(message.text.lower() in j.lower()):
+			btn = telebot.types.InlineKeyboardButton(j, callback_data=i);
+			markup.add(btn);
+	bot.reply_to(message, "Выбери тему:", reply_markup=markup);
+
+@bot.callback_query_handler(func=lambda call: True)
+def callback_inline(call):
+	if(call.from_user.id not in topics[call.data]): topics[call.data] += [call.from_user.id];
+	commit_topics();
+	bot.send_message(call.from_user.id, "Подписал тебя на тему!");
+	bot.answer_callback_query(call.id);
+
 bot.infinity_polling();

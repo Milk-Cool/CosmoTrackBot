@@ -64,7 +64,7 @@ def server():
 					self.wfile.write(b"This topic does not exist.");
 			elif(self.path == "/newtopic"):
 				topics[data["topic"][0]] = [];
-				names[data["topic"][0]] = data["topicname"][0];
+				names[data["topic"][0]] = unescape(data["topicname"][0]);
 				commit_topics();
 				commit_names();
 				self.send_response(400);
@@ -82,7 +82,7 @@ def send_welcome(message):
 		topic = message.text.split(" ")[1];
 		if(message.from_user.id not in topics[topic]): topics[topic] += [message.from_user.id];
 		commit_topics();
-		bot.reply_to(message, "Успешно подписал тебя на тему " + unescape(names[topic]) + "!", reply_markup=markup);
+		bot.reply_to(message, "Успешно подписал тебя на тему " + names[topic] + "!", reply_markup=markup);
 	except IndexError:
 		bot.reply_to(message, "Привет! 👋\nЭтот бот поможет тебе следить за новостями по космосу. Просто нажми на кнопку \"Следить\" под постом на сайте и бот будет присылать тебе новости про определённую миссию, компанию, страну и т. д.\n\nДля того, чтобы вручную подписаться на какую-то тему, пришли мне имя темы, и я тебе покажу то, на что ты хочешь подписаться.", reply_markup=no_markup);
 
